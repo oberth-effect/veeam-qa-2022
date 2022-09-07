@@ -46,7 +46,7 @@ def create_parser() -> argparse.ArgumentParser:
 def run_process(pth: pathlib.Path) -> psutil.Popen:
     try:
         pop = psutil.Popen(str(pth))
-    except Exception as e:
+    except OSError as e:
         print(e)
         sys.exit(1)
     else:
