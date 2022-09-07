@@ -35,17 +35,17 @@ def create_parser() -> argparse.ArgumentParser:
             return path.resolve()
 
     par = argparse.ArgumentParser(description="A simple utility that runs and monitors a process.")
-    par.add_argument('-i', '--interval', type=positive_float, default=1, help="Data collection interval in seconds")
-    par.add_argument('-l', '--log', type=argparse.FileType('w'), default="run_log.csv", help="Log output filepath")
-    par.add_argument('-v', '--verbose', action='store_true', help="Prints Log to console")
-    par.add_argument('executable', type=executable_path, help="Path to process executable")
+    par.add_argument('-i', '--interval', type=positive_float, default=1, help="data collection interval in seconds")
+    par.add_argument('-l', '--log', type=argparse.FileType('w'), default="run_log.csv", help="log output filepath")
+    par.add_argument('-v', '--verbose', action='store_true', help="prints log to console")
+    par.add_argument('executable', type=executable_path, help="path to process executable")
 
     return par
 
 
 def run_process(pth: pathlib.Path) -> psutil.Popen:
     try:
-        pop = psutil.Popen(pth)
+        pop = psutil.Popen(str(pth))
     except Exception as e:
         print(e)
         sys.exit(1)
@@ -85,8 +85,12 @@ def write_line(f: typing.TextIO, d: dict):
 
 
 def stop_process(proc: psutil.Popen):
-    print("Stopping executable...")
-    proc.kill()
+    try:
+        proc.kill()
+    except psutil.NoSuchProcess:
+        pass
+    else:
+        print("Stopping executable...")
 
 
 if __name__ == '__main__':
@@ -120,6 +124,9 @@ if __name__ == '__main__':
             print(f"Process exited, stopping data collection.")
             sys.exit()
         else:
+            if p.poll() is not None:
+                print(f"Process exited with code {p.poll()}, stopping data collection.")
+                sys.exit()
             if args.verbose:
                 print(
                     f"{datetime.now()}: CPU={data['cpu']}, WS/RSS={data['memory'][0]}, PB/VMS={data['memory'][1]}, "
